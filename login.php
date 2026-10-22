@@ -9,13 +9,29 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
  if (!filter_var($email,FILTER_VALIDATE_EMAIL) || $password==='') $error='Enter email and password.';
  else {
  // TODO 1: Query a single user by email using a prepared statement.
- // $sql = 'SELECT ... FROM users WHERE ... = ? LIMIT 1';
+ $sql = 'SELECT id, profile_id, password_hash FROM users WHERE email = ? LIMIT 1';
+ $stmt = mysqli_prepare($conn, $sql);
+
  // TODO 2: Use mysqli_stmt_bind_param / execute / bind_result / fetch.
+ mysqli_stmt_bind_param($stmt, 's', $email);
+ mysqli_stmt_execute($stmt);
+ mysqli_stmt_bind_result($stmt, $uid, $pid, $hash);
+ $found = mysqli_stmt_fetch($stmt);
+ mysqli_stmt_close($stmt);
+
  // TODO 3: Verify plaintext password with password_verify($password, $hash).
- // TODO 4: On success, session_regenerate_id(true) and set session values:
- // $_SESSION['user_id'], $_SESSION['profile_id'], $_SESSION['email'].
+ if ($found && password_verify($password, $hash)) {
+ // TODO 4: On success, regenerate session ID and set session values.
+ session_regenerate_id(true);
+ $_SESSION['user_id'] = (int)$uid;
+ $_SESSION['profile_id'] = (int)$pid;
+ $_SESSION['email'] = $email;
+
  // TODO 5: Redirect to skills.php and exit.
- $error='TODO: complete login authentication first.';
+ header('Location: skills.php');
+ exit;
+ }
+ $error = 'Invalid email or password.';
  }
 }
 ?>
